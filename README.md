@@ -8,9 +8,10 @@
 
 ### 下载
 
-- [macOS](https://github.com/tonydeng/git-toolkit/raw/github/golang/dist/git-toolkit_darwin_amd64)
-- [Linux 64](https://github.com/tonydeng/git-toolkit/raw/github/golang/dist/git-toolkit_linux_amd64)
-- [Linux 32](https://github.com/tonydeng/git-toolkit/raw/github/golang/dist/git-toolkit_linux_386)
+- [Windows 64-bit](https://github.com/tonydeng/git-toolkit/raw/github/golang/dist/git-toolkit_windows_amd64.exe)
+- [macOS Intel](https://github.com/tonydeng/git-toolkit/raw/github/golang/dist/git-toolkit_darwin_amd64)
+- [macOS Apple Silicon](https://github.com/tonydeng/git-toolkit/raw/github/golang/dist/git-toolkit_darwin_arm64)
+- [Linux 64-bit](https://github.com/tonydeng/git-toolkit/raw/github/golang/dist/git-toolkit_linux_amd64)
 
 ### 查看版本
 
@@ -66,7 +67,7 @@
 
 ### 操作系统
 
-目前只支持`Macos`、`Linux`
+支持 `Windows`、`macOS`（Intel 和 Apple Silicon）、`Linux` 64 位系统
 
 ## 文档
 

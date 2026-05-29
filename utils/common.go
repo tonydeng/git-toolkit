@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -105,7 +104,7 @@ func Root() bool {
 }
 
 func OSEditInput() string {
-	f, err := ioutil.TempFile("", "git-toolkit")
+	f, err := os.CreateTemp("", "git-toolkit")
 	CheckAndExit(err)
 
 	defer func() {
@@ -130,7 +129,7 @@ func OSEditInput() string {
 
 	Exec(editor, f.Name())
 
-	raw, err := ioutil.ReadFile(f.Name())
+	raw, err := os.ReadFile(f.Name())
 	CheckAndExit(err)
 	input := string(bytes.TrimPrefix(raw, bom))
 
@@ -220,7 +219,7 @@ func ReverseArray(array []string) []string {
 	return array
 }
 
-func FileExits(path string) (bool, error) {
+func FileExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
 		return true, nil
@@ -235,8 +234,8 @@ func FileExits(path string) (bool, error) {
 func GenChangeLogSaveToFile(path string, content []string) {
 	var f *os.File
 	var err error
-	fileExitsFlag, _ := FileExits(path)
-	if fileExitsFlag {
+	fileExistsFlag, _ := FileExists(path)
+	if fileExistsFlag {
 		f, _ = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0777)
 	} else {
 		dir, filename := filepath.Split(path)
@@ -319,7 +318,7 @@ func FetchUserInfo(username string) []UserInfo {
 	if response, err := http.Get(url); err != nil {
 		fmt.Println(err)
 	} else {
-		if userInfoByte, err = ioutil.ReadAll(response.Body); err != nil {
+		if userInfoByte, err = io.ReadAll(response.Body); err != nil {
 			fmt.Println(err)
 		}
 	}
@@ -338,7 +337,7 @@ func FetchProjectInfo() []ProjectInfo {
 	if response, err := http.Get(url); err != nil {
 		fmt.Println(err)
 	} else {
-		if projectInfoByte, err = ioutil.ReadAll(response.Body); err != nil {
+		if projectInfoByte, err = io.ReadAll(response.Body); err != nil {
 			fmt.Println(err)
 		}
 	}

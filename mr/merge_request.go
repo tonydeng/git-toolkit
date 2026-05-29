@@ -89,6 +89,7 @@ func GetMergeRequestChanges(ops GetMergeRequestChangesOps) (*gitlab.MergeRequest
 	if err != nil {
 		log.Fatal(err)
 	}
-	mergeRequest, response, e := client.MergeRequests.GetMergeRequestChanges(ops.TargetProjectID, ops.MergeRequestID)
+	opt := &gitlab.GetMergeRequestChangesOptions{}
+	mergeRequest, response, e := client.MergeRequests.GetMergeRequestChanges(ops.TargetProjectID, ops.MergeRequestID, opt)
 	return mergeRequest, response, e
 }

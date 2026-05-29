@@ -2,8 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"os"
+
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 )
 
 type Meta struct {
@@ -13,10 +14,14 @@ type Meta struct {
 
 func NewReadConfig(filename string) map[string][]string {
 	var meta Meta
-	data, err := ioutil.ReadFile(filename)
-	err = yaml.Unmarshal(data, &meta)
+	data, err := os.ReadFile(filename)
 	if err != nil {
-		fmt.Printf("Fatal error config file: %s \n", err)
+		fmt.Printf("Fatal error reading config file: %s \n", err)
+		return nil
+	}
+	if err := yaml.Unmarshal(data, &meta); err != nil {
+		fmt.Printf("Fatal error parsing config file: %s \n", err)
+		return nil
 	}
 	return meta.Verify
 }
@@ -40,13 +45,14 @@ func GetKey(m map[string][]string, key string) bool {
 
 func ReadGitlabConfig(filename string) map[string]string {
 	var meta Meta
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
-		fmt.Printf("Fatal error config file: %s \n", err)
+		fmt.Printf("Fatal error reading config file: %s \n", err)
+		return nil
 	}
-	err = yaml.Unmarshal(data, &meta)
-	if err != nil {
-		fmt.Printf("Fatal error config file: %s \n", err)
+	if err := yaml.Unmarshal(data, &meta); err != nil {
+		fmt.Printf("Fatal error parsing config file: %s \n", err)
+		return nil
 	}
 	return meta.Gitlab
 }

@@ -1,8 +1,9 @@
 package git
 
 import (
-	"github.com/tonydeng/git-toolkit/utils"
 	"strings"
+
+	"github.com/tonydeng/git-toolkit/utils"
 )
 
 type CommitType string
