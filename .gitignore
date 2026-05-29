@@ -364,4 +364,7 @@ $RECYCLE.BIN/
 # Current Project
 #dist
 
+# Configuration files with sensitive information
+config.yaml
+
 # End of https://www.gitignore.io/api/vim,osx,macos,linux,windows,visualstudiocode,jetbrains+all,eclipse,java,maven,go,rust,gitbook

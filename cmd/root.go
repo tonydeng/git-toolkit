@@ -51,6 +51,19 @@ func init() {
 	// 远程仓库相关命令
 	RootCmd.AddCommand(NewPs())
 
+	// 变更日志相关命令
+	RootCmd.AddCommand(NewClog())
+
+	// 历史提交修改相关命令
+	RootCmd.AddCommand(NewRepl())
+
+	// Merge Request相关命令
+	RootCmd.AddCommand(NewCmr())
+	RootCmd.AddCommand(NewUmr())
+	RootCmd.AddCommand(NewDmr())
+	RootCmd.AddCommand(NewAmr())
+	RootCmd.AddCommand(NewGmr())
+
 	// 版本信息
 	RootCmd.AddCommand(NewVersion())
 }

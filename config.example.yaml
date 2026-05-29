@@ -1,0 +1,55 @@
+# Git Toolkit 配置文件样例
+# 复制此文件为 config.yaml 并根据实际情况修改配置
+
+# ============================================
+# 邮箱验证配置
+# ============================================
+# 用于验证 Git 提交者邮箱是否符合企业域名要求
+# 格式：企业域名: 允许的邮箱域名列表
+verify:
+  # 示例：github.com 企业账号配置
+  github.com:
+    - github.com              # 允许 github.com 邮箱
+    - users.noreply.github.com  # GitHub 提供的隐私邮箱
+  
+  # 示例：企业域名配置
+  # yourcompany.com:
+  #   - yourcompany.com       # 企业主域名邮箱
+  #   - subsidiary.com        # 子公司域名邮箱
+  #   - partners.com          # 合作伙伴域名邮箱
+
+# ============================================
+# GitLab 配置
+# ============================================
+# GitLab 服务器连接配置，用于 MR (Merge Request) 相关功能
+gitlab:
+  # GitLab 服务器地址
+  # 如果使用 GitLab.com，使用 https://gitlab.com
+  # 如果使用私有 GitLab，使用您的服务器地址，如：https://gitlab.yourcompany.com
+  url: https://gitlab.com
+  
+  # 个人访问令牌 (Personal Access Token)
+  # 获取方式：
+  # 1. 登录 GitLab
+  # 2. 进入 User Settings -> Access Tokens
+  # 3. 创建一个新的 Token，勾选 api 权限
+  # 注意：请妥善保管您的 Token，不要提交到代码仓库
+  token: your-personal-access-token-here
+
+# ============================================
+# 配置说明
+# ============================================
+# 1. verify 配置项：
+#    - 用于 pre-commit hook 验证提交者邮箱
+#    - 键为企业域名，值为允许的邮箱域名列表
+#    - 支持配置多个企业域名和多个邮箱域名
+#
+# 2. gitlab 配置项：
+#    - url: GitLab 服务器地址，必须包含协议 (http/https)
+#    - token: 个人访问令牌，需要有 api 权限
+#    - 用于创建、查询、合并 Merge Request 等操作
+#
+# 3. 安全建议：
+#    - 不要将真实的 config.yaml 提交到代码仓库
+#    - 定期更换 GitLab Token
+#    - 为不同环境使用不同的配置文件

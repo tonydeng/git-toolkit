@@ -1,14 +1,20 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 const Cmd = "git"
@@ -19,7 +25,6 @@ var HooksPath string
 var GitCMHookPath string
 var CurrentPath string
 
-// 安装路径等配置初始化
 func init() {
 
 	var err error
@@ -37,7 +42,6 @@ func init() {
 	CheckAndExit(err)
 }
 
-// 判断是否有错误
 func IskErr(err error) bool {
 	if err != nil {
 		fmt.Println(err)
@@ -46,14 +50,12 @@ func IskErr(err error) bool {
 	return true
 }
 
-// 检查错误并退出
 func CheckAndExit(err error) {
 	if !IskErr(err) {
 		os.Exit(1)
 	}
 }
 
-// 执行命令，忽略错误
 func MustExec(name string, arg ...string) {
 	cmd := exec.Command(name, arg...)
 	cmd.Stdin = os.Stdin
@@ -62,7 +64,6 @@ func MustExec(name string, arg ...string) {
 	cmd.Run()
 }
 
-// 执行命令，有错误则退出
 func Exec(name string, arg ...string) {
 	cmd := exec.Command(name, arg...)
 	cmd.Stdin = os.Stdin
@@ -71,7 +72,6 @@ func Exec(name string, arg ...string) {
 	CheckAndExit(cmd.Run())
 }
 
-// 执行命令并返回标准输出，有错误则退出
 func ExecRtOut(name string, arg ...string) string {
 	cmd := exec.Command(name, arg...)
 	cmd.Stdin = os.Stdin
@@ -87,27 +87,23 @@ func ExecRtOut(name string, arg ...string) string {
 	return string(b)
 }
 
-// 执行命令忽略标准输出，有错误则退出
 func ExecNoOut(name string, arg ...string) {
 	cmd := exec.Command(name, arg...)
 	cmd.Stderr = os.Stderr
 	CheckAndExit(cmd.Run())
 }
 
-// 执行命令，当有错误将错误返回给调用者
 func TryExec(name string, arg ...string) error {
 	cmd := exec.Command(name, arg...)
 	return cmd.Run()
 }
 
-// 判断当前用户是否有root权限
 func Root() bool {
 	u, err := user.Current()
 	CheckAndExit(err)
 	return u.Uid == "0" || u.Gid == "0"
 }
 
-// 基于操作系统选择编辑器输入
 func OSEditInput() string {
 	f, err := ioutil.TempFile("", "git-toolkit")
 	CheckAndExit(err)
@@ -117,12 +113,10 @@ func OSEditInput() string {
 		_ = os.Remove(f.Name())
 	}()
 
-	// write utf8 bom
 	bom := []byte{0xef, 0xbb, 0xbf}
 	_, err = f.Write(bom)
 	CheckAndExit(err)
 
-	//获取系统编辑器
 	editor := "vim"
 	if runtime.GOOS == "windows" {
 		editor = "notepad"
@@ -134,7 +128,6 @@ func OSEditInput() string {
 		editor = e
 	}
 
-	//执行编辑器
 	Exec(editor, f.Name())
 
 	raw, err := ioutil.ReadFile(f.Name())
@@ -144,7 +137,6 @@ func OSEditInput() string {
 	return input
 }
 
-// 检查操作系统
 func CheckOS() {
 	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
 		fmt.Println("Platform not support!")
@@ -152,7 +144,6 @@ func CheckOS() {
 	}
 }
 
-// 构建命令目录
 func GenBinPaths(dir string) []string {
 	return []string{
 		filepath.Join(dir, "git-ci"),
@@ -167,5 +158,205 @@ func GenBinPaths(dir string) []string {
 		filepath.Join(dir, "git-perf"),
 		filepath.Join(dir, "git-hotfix"),
 		filepath.Join(dir, "git-ps"),
+		filepath.Join(dir, "git-cmr"),
+		filepath.Join(dir, "git-umr"),
+		filepath.Join(dir, "git-dmr"),
+		filepath.Join(dir, "git-amr"),
+		filepath.Join(dir, "git-gmr"),
 	}
+}
+
+func IsContain(items []string, item string) bool {
+	for _, eachItem := range items {
+		if eachItem == item {
+			return true
+		}
+	}
+	return false
+}
+
+func MustExecRtOut(name string, arg ...string) string {
+	cmd := exec.Command(name, arg...)
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	b, _ := cmd.Output()
+	return string(b)
+}
+
+func TrimString(str string, sign string) string {
+	arr := strings.Split(str, sign)
+	var result strings.Builder
+	if len(arr) <= 1 {
+		return str
+	}
+	for i := 1; i < len(arr); i++ {
+		result.WriteString(arr[i])
+		if i != len(arr)-1 {
+			result.WriteString(sign)
+		}
+	}
+	return result.String()
+}
+
+func SubString(source string, start int, end int) string {
+	var r = []rune(source)
+	length := len(r)
+	if start < 0 || end > length || start > end {
+		return ""
+	}
+
+	var substring = ""
+	for i := start; i < end; i++ {
+		substring += string(r[i])
+	}
+
+	return substring
+}
+
+func ReverseArray(array []string) []string {
+	for i, j := 0, len(array)-1; i < j; i, j = i+1, j-1 {
+		array[i], array[j] = array[j], array[i]
+	}
+	return array
+}
+
+func FileExits(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsExist(err) {
+		return true, nil
+	} else {
+		return false, err
+	}
+}
+
+func GenChangeLogSaveToFile(path string, content []string) {
+	var f *os.File
+	var err error
+	fileExitsFlag, _ := FileExits(path)
+	if fileExitsFlag {
+		f, _ = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0777)
+	} else {
+		dir, filename := filepath.Split(path)
+		e := os.MkdirAll(dir, 0766)
+		if e != nil {
+			fmt.Errorf("something is wrong with {%s}", path)
+		}
+		t := dir + filename
+		f, err = os.Create(t)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	defer f.Close()
+	for _, info := range content {
+		_, err = io.WriteString(f, info)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func ReadVersionFile(filename string) string {
+	file, err := os.Open(filename)
+	if err != nil {
+		fmt.Printf("There is a error %s \n", err)
+	}
+	defer file.Close()
+	line := bufio.NewReader(file)
+	content, _, err := line.ReadLine()
+	if err != nil {
+		fmt.Printf("there is a error %s \n", err)
+		os.Exit(1)
+	}
+	return string(content)
+}
+
+func GetCurrentBranchName() string {
+	currentBranchName := ExecRtOut(Cmd, "rev-parse", "--abbrev-ref", "HEAD")
+	return strings.TrimSpace(currentBranchName)
+}
+
+func GetSHA() string {
+	sha := ExecRtOut(Cmd, "rev-parse", "HEAD")
+	return sha
+}
+
+func GetProjectUrl() string {
+	command := exec.Command(Cmd, "remote", "get-url", "origin")
+	repositoryOrigin, _ := command.Output()
+	repositoryOriginArray := strings.Split(string(repositoryOrigin), "/")
+	repository := repositoryOriginArray[2]
+	repositoryUrl := "https://" + repository + "/api/v4"
+	return repositoryUrl
+}
+
+func GetProjectName() string {
+	dir := ExecRtOut(Cmd, "rev-parse", "--show-toplevel")
+	_, projectName := filepath.Split(dir)
+	return projectName
+}
+
+type UserInfo struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Username  string `json:"username"`
+	State     string `json:"state"`
+	AvatarUrl string `json:"avatar_url"`
+	WebUrl    string `json:"web_url"`
+}
+
+type ProjectInfo struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+func FetchUserInfo(username string) []UserInfo {
+	url := GetProjectUrl() + "/users?username=" + username
+	var userInfoByte []byte
+	if response, err := http.Get(url); err != nil {
+		fmt.Println(err)
+	} else {
+		if userInfoByte, err = ioutil.ReadAll(response.Body); err != nil {
+			fmt.Println(err)
+		}
+	}
+	var u []UserInfo
+	err := json.Unmarshal(userInfoByte, &u)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return u
+}
+
+func FetchProjectInfo() []ProjectInfo {
+	projectName := strings.TrimSpace(GetProjectName())
+	url := GetProjectUrl() + "/projects?search=" + projectName
+	var projectInfoByte []byte
+	if response, err := http.Get(url); err != nil {
+		fmt.Println(err)
+	} else {
+		if projectInfoByte, err = ioutil.ReadAll(response.Body); err != nil {
+			fmt.Println(err)
+		}
+	}
+	var p []ProjectInfo
+	err := json.Unmarshal(projectInfoByte, &p)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return p
+}
+
+func GetProjectID() int {
+	projectInfo := FetchProjectInfo()
+	var targetProjectID int
+	for _, project := range projectInfo {
+		if project.Name == strings.TrimSpace(GetProjectName()) {
+			targetProjectID = project.ID
+		}
+	}
+	return targetProjectID
 }
